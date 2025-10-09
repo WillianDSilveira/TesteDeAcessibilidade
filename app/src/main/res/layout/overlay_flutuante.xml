@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/overlay_border_bg"
+    android:elevation="12dp">
+
+    <!-- LINHA 0: Status/Recomendação Principal (tv_status_title) -->
+    <TextView
+        android:id="@+id/tv_status_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ANÁLISE DE OFERTA"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="8dp"
+        android:paddingTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:background="#33FFFFFF" /> <!-- Fundo claro para destaque -->
+
+    <!-- LINHA 1: Métricas Principais (3 Colunas) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <!-- Coluna 1: R$/Km (usando o ID existente tv_rate_per_km) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$/Km"
+                android:textSize="12sp"
+                android:textColor="#90EE90" />
+
+            <TextView
+                android:id="@+id/tv_rate_per_km"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$ 0.00"
+                android:textSize="20sp"
+                android:textColor="#00FF00"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <!-- Separador Visual Simples -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#33FFFFFF"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- Coluna 2: R$/Hora (Novo ID) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$/Hora"
+                android:textSize="12sp"
+                android:textColor="#ADD8E6" />
+
+            <TextView
+                android:id="@+id/tv_rate_per_hour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="R$ 0.00"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <!-- Separador Visual Simples -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#33FFFFFF"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- Coluna 3: Nota (Novo ID) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nota"
+                android:textSize="12sp"
+                android:textColor="#ADD8E6" />
+
+            <TextView
+                android:id="@+id/tv_passenger_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00"
+                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Separador Horizontal -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- LINHA 2: Detalhes de Distância e Tempo (usando IDs existentes) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tempo Total:"
+            android:textColor="#ADD8E6"
+            android:textSize="14sp"/>
+
+        <!-- ID existente tv_total_time -->
+        <TextView
+            android:id="@+id/tv_total_time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="0 min"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Distância Total:"
+            android:textColor="#ADD8E6"
+            android:textSize="14sp"/>
+
+        <!-- ID existente tv_total_km -->
+        <TextView
+            android:id="@+id/tv_total_km"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="0.0 km"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+    <!-- Botão de Fechar (Redimensionado e estilizado para o novo layout) -->
+    <Button
+        android:id="@+id/btn_close_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Fechar Visualização"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#2E7D32" />
+
+</LinearLayout>

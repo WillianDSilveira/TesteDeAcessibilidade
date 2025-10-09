@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <shape android:id="@+id/rounded_background">
+        <solid android:color="#FF000000"/> <!-- Fundo Preto Semi-Transparente -->
+        <corners android:radius="12dp"/>
+        <stroke android:width="2dp" android:color="#FF00FF00"/> <!-- Borda verde para destaque -->
+    </shape>
+</selector>

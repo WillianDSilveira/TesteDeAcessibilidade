@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Fundo Preto Semi-Transparente (Cor Black, com Opacidade ajustável se necessário) -->
+    <solid android:color="#FF000000" />
+
+    <!-- Borda Verde (Brilhante, similar ao da imagem) -->
+    <stroke
+        android:width="4dp"
+        android:color="#4CAF50" />
+
+    <!-- Cantos Arredondados -->
+    <corners android:radius="16dp" />
+
+</shape>
