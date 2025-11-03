@@ -401,8 +401,14 @@ public class MyAcessibilityService extends AccessibilityService {
 
             // Busca pelo botão "Aceitar" para servir como gatilho da detecção de pedido
             // Corrigido de "Selecionar" para "Aceitar"
-            List<AccessibilityNodeInfo> targetButtons = source.findAccessibilityNodeInfosByText("Aceitar");
-            boolean isTriggerPresent = targetButtons != null && !targetButtons.isEmpty();
+            List<AccessibilityNodeInfo> aceitarButtons = source.findAccessibilityNodeInfosByText("Aceitar");
+            List<AccessibilityNodeInfo> selecionarButtons = source.findAccessibilityNodeInfosByText("Selecionar");
+
+            boolean hasClickableAceitar = aceitarButtons != null && aceitarButtons.stream().anyMatch(AccessibilityNodeInfo::isClickable);
+            boolean hasClickableSelecionar = selecionarButtons != null && selecionarButtons.stream().anyMatch(AccessibilityNodeInfo::isClickable);
+
+            boolean isTriggerPresent = hasClickableAceitar || hasClickableSelecionar;
+
 
             if (isTriggerPresent) {
                 logAndClearData();
