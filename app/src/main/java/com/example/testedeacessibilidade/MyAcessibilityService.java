@@ -1,6 +1,7 @@
 package com.example.testedeacessibilidade;
 
 import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -105,8 +106,8 @@ public class MyAcessibilityService extends AccessibilityService {
             }
         };
 
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
-                .setMinUpdateIntervalMillis(5000)
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+                .setMinUpdateIntervalMillis(2000)
                 .build();
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
@@ -118,36 +119,60 @@ public class MyAcessibilityService extends AccessibilityService {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private void getCurrentLocation(Runnable onLocationReady) {
-        // Se já tem uma localização recente, usa ela
-        if (driverCurrentLocation != null) {
-            onLocationReady.run();
-            return;
-        }
-
-        // Tenta pegar uma única localização atual
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             Log.e(TAG, "Permissão de Localização Ausente para getCurrentLocation!");
-            onLocationReady.run();
             return;
         }
 
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener(location -> {
-                    if (location != null) {
-                        driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
-                                location.getLatitude(), location.getLongitude());
-                        Log.d(TAG, "Localização obtida no momento da chamada: " + driverCurrentLocation);
-                    } else {
-                        Log.w(TAG, "Não foi possível obter localização imediata.");
+        // Tenta obter a última localização rápida (cache)
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+            boolean hasRecentLocation = false;
+
+            if (location != null) {
+                long age = System.currentTimeMillis() - location.getTime();
+                // Considera válida se tiver menos de 10 segundos
+                if (age < 10_000) {
+                    driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
+                            location.getLatitude(), location.getLongitude());
+                    hasRecentLocation = true;
+                    Log.i(TAG, "📍 Localização recente usada (cache): " + driverCurrentLocation);
+                    onLocationReady.run();
+                }
+            }
+
+            if (!hasRecentLocation) {
+                // Caso o cache seja velho ou nulo, solicita uma atualização REAL do GPS
+                LocationRequest request = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
+                        .setMinUpdateIntervalMillis(0)
+                        .setMaxUpdates(1) // apenas 1 leitura
+                        .build();
+
+                Log.i(TAG, "⏳ Aguardando atualização real do GPS...");
+
+                fusedLocationClient.requestLocationUpdates(request, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        if (locationResult == null) {
+                            Log.e(TAG, "⚠️ Falha ao obter atualização de localização.");
+                            return;
+                        }
+
+                        Location freshLocation = locationResult.getLastLocation();
+                        if (freshLocation != null) {
+                            driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
+                                    freshLocation.getLatitude(), freshLocation.getLongitude());
+                            Log.i(TAG, "✅ Localização atual obtida do GPS: " + driverCurrentLocation);
+
+                            fusedLocationClient.removeLocationUpdates(this); // evita múltiplas chamadas
+                            onLocationReady.run();
+                        }
                     }
-                    onLocationReady.run();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Falha ao obter localização atual: " + e.getMessage());
-                    onLocationReady.run();
-                });
+                }, Looper.getMainLooper());
+            }
+        });
     }
 
     @Override
