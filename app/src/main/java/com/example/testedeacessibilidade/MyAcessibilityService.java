@@ -29,12 +29,13 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.testedeacessibilidade.business.RideDataExtractor;
-import com.example.testedeacessibilidade.business.RideDecisionMaker;
-import com.example.testedeacessibilidade.business.RouterVerifier;
-import com.example.testedeacessibilidade.business.RouterVerifier.RouteCallback;
-import com.example.testedeacessibilidade.data.RideOfferData;
-import com.example.testedeacessibilidade.data.DecisionResult;
+// MANUTENÇÃO DOS NOMES DE CLASSE E PACOTE DO SEU PROJETO
+import com.example.testedeacessibilidade.business.ExtratorDadosCorrida; // Renomeado para ExtratorDadosCorrida na tradução
+import com.example.testedeacessibilidade.business.DecisorCorrida; // Renomeado para DecisorCorrida na tradução
+import com.example.testedeacessibilidade.business.VerificadorRota; // Renomeado para VerificadorRota na tradução
+import com.example.testedeacessibilidade.business.VerificadorRota.RouteCallback; // Renomeado para VerificadorRota.CallbackRota na tradução
+import com.example.testedeacessibilidade.data.DadosOfertaCorrida; // Renomeado para DadosOfertaCorrida na tradução
+import com.example.testedeacessibilidade.data.ResultadoDecisao; // Renomeado para ResultadoDecisao na tradução
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -47,127 +48,127 @@ import java.util.Locale;
 
 public class MyAcessibilityService extends AccessibilityService {
 
-    private static final String TAG = "DEBUG_MONITOR";
-    private static final String TARGET_PACKAGE_NAME = "com.ubercab.driver";
-    private static final String CHANNEL_ID = "acessibilidade_monitor";
-    private static final int NOTIFICATION_ID = 101;
+    private static final String TAG_DEPURACAO = "DEBUG_MONITOR";
+    private static final String NOME_PACOTE_ALVO = "com.ubercab.driver";
+    private static final String ID_CANAL = "acessibilidade_monitor";
+    private static final int ID_NOTIFICACAO = 101;
 
-    private long lastProcessedTime = 0;
-    private static final long DEBOUNCE_INTERVAL_MS = 1000;
-    private String lastProcessedContentHash = "";
+    private long ultimoTempoProcessado = 0;
+    private static final long INTERVALO_DEBOUNCE_MS = 1000;
+    private String ultimoHashConteudoProcessado = "";
 
-    private final RideOfferData rideData = new RideOfferData();
-    private RideDataExtractor dataExtractor;
-    private RideDecisionMaker decisionMaker;
-    private final Handler handler = new Handler();
-    private FloatingOverlay floatingOverlay;
-    private boolean overlaySuccessfullyShown = false;
-    private RouterVerifier routeVerifier;
+    private final DadosOfertaCorrida dadosCorrida = new DadosOfertaCorrida();
+    private ExtratorDadosCorrida extratorDados;
+    private DecisorCorrida decisorCorrida;
+    private final Handler manipulador = new Handler();
+    private OverlayFlutuante overlayFlutuante;
+    private boolean overlayExibidoComSucesso = false;
+    private VerificadorRota verificadorRota;
 
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
-    private String driverCurrentLocation = null;
+    private FusedLocationProviderClient clienteLocalizacaoFundida;
+    private LocationCallback callbackLocalizacao;
+    private String localizacaoAtualMotorista = null;
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        Log.i(TAG, "Serviço de Monitoramento CONECTADO e ativo.");
+        Log.i(TAG_DEPURACAO, "Serviço de Monitoramento CONECTADO e ativo.");
 
-        dataExtractor = new RideDataExtractor(rideData);
-        decisionMaker = new RideDecisionMaker();
-        floatingOverlay = new FloatingOverlay(this);
-        routeVerifier = new RouterVerifier();
+        extratorDados = new ExtratorDadosCorrida(dadosCorrida);
+        decisorCorrida = new DecisorCorrida();
+        overlayFlutuante = new OverlayFlutuante(this);
+        verificadorRota = new VerificadorRota();
 
-        startForegroundServiceCompat();
+        iniciarServicoPrimeiroPlanoCompativel();
         Toast.makeText(this, "Serviço de acessibilidade ativo.", Toast.LENGTH_SHORT).show();
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        startLocationUpdates();
+        clienteLocalizacaoFundida = LocationServices.getFusedLocationProviderClient(this);
+        iniciarAtualizacoesLocalizacao();
     }
 
-    private void startLocationUpdates() {
+    private void iniciarAtualizacoesLocalizacao() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "Permissão de Localização Ausente!");
+            Log.e(TAG_DEPURACAO, "Permissão de Localização Ausente!");
             return;
         }
 
-        locationCallback = new LocationCallback() {
+        callbackLocalizacao = new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) return;
-                for (Location location : locationResult.getLocations()) {
-                    if (location != null) {
-                        driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
-                                location.getLatitude(), location.getLongitude());
-                        Log.d(TAG, "GPS Atualizado: " + driverCurrentLocation);
+            public void onLocationResult(LocationResult resultadoLocalizacao) {
+                if (resultadoLocalizacao == null) return;
+                for (Location localizacao : resultadoLocalizacao.getLocations()) {
+                    if (localizacao != null) {
+                        localizacaoAtualMotorista = String.format(Locale.US, "%.6f,%.6f",
+                                localizacao.getLatitude(), localizacao.getLongitude());
+                        Log.d(TAG_DEPURACAO, "GPS Atualizado: " + localizacaoAtualMotorista);
                     }
                 }
             }
         };
 
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
+        LocationRequest requisicaoLocalizacao = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
                 .setMinUpdateIntervalMillis(2000)
                 .build();
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        clienteLocalizacaoFundida.requestLocationUpdates(requisicaoLocalizacao, callbackLocalizacao, Looper.getMainLooper());
     }
 
-    private void stopLocationUpdates() {
-        if (fusedLocationClient != null && locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
+    private void pararAtualizacoesLocalizacao() {
+        if (clienteLocalizacaoFundida != null && callbackLocalizacao != null) {
+            clienteLocalizacaoFundida.removeLocationUpdates(callbackLocalizacao);
         }
     }
 
     @SuppressLint("MissingPermission")
-    private void getCurrentLocation(Runnable onLocationReady) {
+    private void obterLocalizacaoAtual(Runnable aoLocalizacaoPronta) {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "Permissão de Localização Ausente para getCurrentLocation!");
+            Log.e(TAG_DEPURACAO, "Permissão de Localização Ausente para obterLocalizacaoAtual!");
             return;
         }
 
         // Tenta obter a última localização rápida (cache)
-        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-            boolean hasRecentLocation = false;
+        clienteLocalizacaoFundida.getLastLocation().addOnSuccessListener(localizacao -> {
+            boolean temLocalizacaoRecente = false;
 
-            if (location != null) {
-                long age = System.currentTimeMillis() - location.getTime();
+            if (localizacao != null) {
+                long idade = System.currentTimeMillis() - localizacao.getTime();
                 // Considera válida se tiver menos de 10 segundos
-                if (age < 10_000) {
-                    driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
-                            location.getLatitude(), location.getLongitude());
-                    hasRecentLocation = true;
-                    Log.i(TAG, "📍 Localização recente usada (cache): " + driverCurrentLocation);
-                    onLocationReady.run();
+                if (idade < 10_000) {
+                    localizacaoAtualMotorista = String.format(Locale.US, "%.6f,%.6f",
+                            localizacao.getLatitude(), localizacao.getLongitude());
+                    temLocalizacaoRecente = true;
+                    Log.i(TAG_DEPURACAO, "📍 Localização recente usada (cache): " + localizacaoAtualMotorista);
+                    aoLocalizacaoPronta.run();
                 }
             }
 
-            if (!hasRecentLocation) {
+            if (!temLocalizacaoRecente) {
                 // Caso o cache seja velho ou nulo, solicita uma atualização REAL do GPS
-                LocationRequest request = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
+                LocationRequest requisicao = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
                         .setMinUpdateIntervalMillis(0)
                         .setMaxUpdates(1) // apenas 1 leitura
                         .build();
 
-                Log.i(TAG, "⏳ Aguardando atualização real do GPS...");
+                Log.i(TAG_DEPURACAO, "⏳ Aguardando atualização real do GPS...");
 
-                fusedLocationClient.requestLocationUpdates(request, new LocationCallback() {
+                clienteLocalizacaoFundida.requestLocationUpdates(requisicao, new LocationCallback() {
                     @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        if (locationResult == null) {
-                            Log.e(TAG, "⚠️ Falha ao obter atualização de localização.");
+                    public void onLocationResult(LocationResult resultadoLocalizacao) {
+                        if (resultadoLocalizacao == null) {
+                            Log.e(TAG_DEPURACAO, "⚠️ Falha ao obter atualização de localização.");
                             return;
                         }
 
-                        Location freshLocation = locationResult.getLastLocation();
-                        if (freshLocation != null) {
-                            driverCurrentLocation = String.format(Locale.US, "%.6f,%.6f",
-                                    freshLocation.getLatitude(), freshLocation.getLongitude());
-                            Log.i(TAG, "✅ Localização atual obtida do GPS: " + driverCurrentLocation);
+                        Location localizacaoFresca = resultadoLocalizacao.getLastLocation();
+                        if (localizacaoFresca != null) {
+                            localizacaoAtualMotorista = String.format(Locale.US, "%.6f,%.6f",
+                                    localizacaoFresca.getLatitude(), localizacaoFresca.getLongitude());
+                            Log.i(TAG_DEPURACAO, "✅ Localização atual obtida do GPS: " + localizacaoAtualMotorista);
 
-                            fusedLocationClient.removeLocationUpdates(this); // evita múltiplas chamadas
-                            onLocationReady.run();
+                            clienteLocalizacaoFundida.removeLocationUpdates(this); // evita múltiplas chamadas
+                            aoLocalizacaoPronta.run();
                         }
                     }
                 }, Looper.getMainLooper());
@@ -177,32 +178,32 @@ public class MyAcessibilityService extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
-        stopLocationUpdates();
-        if (floatingOverlay != null) floatingOverlay.hide();
-        Log.w(TAG, "Serviço de Monitoramento INTERROMPIDO.");
+        pararAtualizacoesLocalizacao();
+        if (overlayFlutuante != null) overlayFlutuante.esconder();
+        Log.w(TAG_DEPURACAO, "Serviço de Monitoramento INTERROMPIDO.");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopLocationUpdates();
-        if (floatingOverlay != null) floatingOverlay.hide();
-        rideData.clear();
-        Log.i(TAG, "Serviço DESTRUÍDO.");
+        pararAtualizacoesLocalizacao();
+        if (overlayFlutuante != null) overlayFlutuante.esconder();
+        dadosCorrida.clear();
+        Log.i(TAG_DEPURACAO, "Serviço DESTRUÍDO.");
     }
 
-    private void startForegroundServiceCompat() {
-        NotificationManager notificationManager =
+    private void iniciarServicoPrimeiroPlanoCompativel() {
+        NotificationManager gerenciadorNotificacao =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, "Monitor de Acessibilidade", NotificationManager.IMPORTANCE_LOW
+            NotificationChannel canal = new NotificationChannel(
+                    ID_CANAL, "Monitor de Acessibilidade", NotificationManager.IMPORTANCE_LOW
             );
-            channel.setDescription("Serviço ativo de monitoramento");
-            notificationManager.createNotificationChannel(channel);
+            canal.setDescription("Serviço ativo de monitoramento");
+            gerenciadorNotificacao.createNotificationChannel(canal);
         }
 
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        Notification notificacao = new NotificationCompat.Builder(this, ID_CANAL)
                 .setContentTitle("Monitor ativo")
                 .setContentText("O serviço de monitoramento está em execução.")
                 .setSmallIcon(android.R.drawable.ic_menu_view)
@@ -211,197 +212,197 @@ public class MyAcessibilityService extends AccessibilityService {
                 .build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            startForeground(ID_NOTIFICACAO, notificacao, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
         } else {
-            startForeground(NOTIFICATION_ID, notification);
+            startForeground(ID_NOTIFICACAO, notificacao);
         }
     }
 
     // ============================================================
     // 🔹 Overlay (mantido sem alterações)
     // ============================================================
-    private class FloatingOverlay {
-        private WindowManager windowManager;
-        private View floatingView;
-        public boolean isShowing = false;
+    private class OverlayFlutuante {
+        private WindowManager gerenciadorJanelas;
+        private View visaoFlutuante;
+        public boolean estaExibindo = false;
 
-        public FloatingOverlay(Context context) {
-            windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        public OverlayFlutuante(Context contexto) {
+            gerenciadorJanelas = (WindowManager) contexto.getSystemService(Context.WINDOW_SERVICE);
         }
 
-        public void show(DecisionResult result, RideOfferData data) {
+        public void exibir(ResultadoDecisao resultado, DadosOfertaCorrida dados) {
             if (!Settings.canDrawOverlays(MyAcessibilityService.this)) {
-                overlaySuccessfullyShown = false;
+                overlayExibidoComSucesso = false;
                 return;
             }
 
-            if (isShowing) hide();
+            if (estaExibindo) esconder();
 
-            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            floatingView = inflater.inflate(R.layout.overlay_flutuante, null);
+            LayoutInflater inflador = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            visaoFlutuante = inflador.inflate(R.layout.overlay_flutuante, null);
 
-            TextView tvStatusTitle = floatingView.findViewById(R.id.tv_status_title);
-            Button btnClose = floatingView.findViewById(R.id.btn_close_overlay);
+            TextView tvTituloStatus = visaoFlutuante.findViewById(R.id.tv_status_title);
+            Button btnFechar = visaoFlutuante.findViewById(R.id.btn_close_overlay);
 
-            String recommendationText = result.recommendedToAccept ? "ACEITÁVEL" : "RECUSÁVEL";
-            int color = result.recommendedToAccept ? Color.parseColor("#4CAF50") : Color.parseColor("#F44336");
+            String textoRecomendacao = resultado.recomendadoAceitar ? "ACEITÁVEL" : "RECUSÁVEL";
+            int cor = resultado.recomendadoAceitar ? Color.parseColor("#4CAF50") : Color.parseColor("#F44336");
 
-            tvStatusTitle.setText(recommendationText + " | " + result.reason);
-            tvStatusTitle.setBackgroundColor(color);
-            btnClose.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
-            btnClose.setOnClickListener(v -> hide());
+            tvTituloStatus.setText(textoRecomendacao + " | " + resultado.razao);
+            tvTituloStatus.setBackgroundColor(cor);
+            btnFechar.setBackgroundTintList(android.content.res.ColorStateList.valueOf(cor));
+            btnFechar.setOnClickListener(v -> esconder());
 
-            TextView tvRatePerKm = floatingView.findViewById(R.id.tv_rate_per_km);
-            TextView tvRatePerHour = floatingView.findViewById(R.id.tv_rate_per_hour);
-            TextView tvPassengerNote = floatingView.findViewById(R.id.tv_passenger_note);
-            TextView tvTotalTime = floatingView.findViewById(R.id.tv_total_time);
-            TextView tvTotalKm = floatingView.findViewById(R.id.tv_total_km);
+            TextView tvTaxaPorKm = visaoFlutuante.findViewById(R.id.tv_rate_per_km);
+            TextView tvTaxaPorHora = visaoFlutuante.findViewById(R.id.tv_rate_per_hour);
+            TextView tvNotaPassageiro = visaoFlutuante.findViewById(R.id.tv_passenger_note);
+            TextView tvTempoTotal = visaoFlutuante.findViewById(R.id.tv_total_time);
+            TextView tvKmTotal = visaoFlutuante.findViewById(R.id.tv_total_km);
 
-            tvRatePerKm.setText(String.format(Locale.getDefault(), "R$ %.2f", result.metrics.ratePerKm));
-            tvRatePerHour.setText(String.format(Locale.getDefault(), "R$ %.2f", result.metrics.ratePerHour));
-            tvPassengerNote.setText(data.passageiroNotaStr);
+            tvTaxaPorKm.setText(String.format(Locale.getDefault(), "R$ %.2f", resultado.metricas.taxaPorKm));
+            tvTaxaPorHora.setText(String.format(Locale.getDefault(), "R$ %.2f", resultado.metricas.taxaPorHora));
+            tvNotaPassageiro.setText(dados.passageiroNotaStr);
 
-            String timeText;
-            String kmText;
+            String textoTempo;
+            String textoKm;
 
-            if (result.apiTotalTempoMinutos > 0.0f) {
-                float minDiff = result.apiTotalTempoMinutos - data.totalTempoMinutos;
-                String minSign = minDiff >= 0 ? "+" : "";
-                timeText = String.format(Locale.getDefault(),
-                        "%.0f min (%s%.0f)", data.totalTempoMinutos, minSign, minDiff);
+            if (resultado.apiTotalTempoMinutos > 0.0f) {
+                float diferencaMinutos = resultado.apiTotalTempoMinutos - dados.totalTempoMinutos;
+                String sinalMinutos = diferencaMinutos >= 0 ? "+" : "";
+                textoTempo = String.format(Locale.getDefault(),
+                        "%.0f min (%s%.0f)", dados.totalTempoMinutos, sinalMinutos, diferencaMinutos);
 
-                float kmDiff = result.apiTotalDistanciaKM - data.totalDistanciaKM;
-                String kmSign = kmDiff >= 0 ? "+" : "";
-                kmText = String.format(Locale.getDefault(),
-                        "%.1f km (%s%.1f)", data.totalDistanciaKM, kmSign, kmDiff);
+                float diferencaKm = resultado.apiTotalDistanciaKM - dados.totalDistanciaKM;
+                String sinalKm = diferencaKm >= 0 ? "+" : "";
+                textoKm = String.format(Locale.getDefault(),
+                        "%.1f km (%s%.1f)", dados.totalDistanciaKM, sinalKm, diferencaKm);
             } else {
-                timeText = String.format(Locale.getDefault(), "%.0f min (Aguardando API)", data.totalTempoMinutos);
-                kmText = String.format(Locale.getDefault(), "%.1f km (Aguardando API)", data.totalDistanciaKM);
+                textoTempo = String.format(Locale.getDefault(), "%.0f min (Aguardando API)", dados.totalTempoMinutos);
+                textoKm = String.format(Locale.getDefault(), "%.1f km (Aguardando API)", dados.totalDistanciaKM);
             }
 
-            tvTotalTime.setText(timeText);
-            tvTotalKm.setText(kmText);
+            tvTempoTotal.setText(textoTempo);
+            tvKmTotal.setText(textoKm);
 
-            int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            int tipo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                     ? WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
                     : WindowManager.LayoutParams.TYPE_PHONE;
 
-            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+            WindowManager.LayoutParams parametros = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
-                    type,
+                    tipo,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                     PixelFormat.TRANSLUCENT
             );
 
-            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            params.y = 150;
+            parametros.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            parametros.y = 150;
 
             try {
-                windowManager.addView(floatingView, params);
-                isShowing = true;
-                overlaySuccessfullyShown = true;
-                handler.postDelayed(hideRunnable, 5000);
+                gerenciadorJanelas.addView(visaoFlutuante, parametros);
+                estaExibindo = true;
+                overlayExibidoComSucesso = true;
+                manipulador.postDelayed(runnableEsconder, 5000);
             } catch (Exception e) {
-                Log.e(TAG, "Erro ao adicionar overlay: " + e.getMessage(), e);
-                overlaySuccessfullyShown = false;
+                Log.e(TAG_DEPURACAO, "Erro ao adicionar overlay: " + e.getMessage(), e);
+                overlayExibidoComSucesso = false;
             }
         }
 
-        public void hide() {
-            if (isShowing && floatingView != null) {
+        public void esconder() {
+            if (estaExibindo && visaoFlutuante != null) {
                 try {
-                    handler.removeCallbacks(hideRunnable);
-                    windowManager.removeView(floatingView);
-                    isShowing = false;
-                    overlaySuccessfullyShown = false;
+                    manipulador.removeCallbacks(runnableEsconder);
+                    gerenciadorJanelas.removeView(visaoFlutuante);
+                    estaExibindo = false;
+                    overlayExibidoComSucesso = false;
                 } catch (Exception e) {
-                    Log.e(TAG, "Erro ao remover overlay: " + e.getMessage(), e);
+                    Log.e(TAG_DEPURACAO, "Erro ao remover overlay: " + e.getMessage(), e);
                 }
             }
         }
 
-        private final Runnable hideRunnable = this::hide;
+        private final Runnable runnableEsconder = this::esconder;
     }
 
     // ============================================================
     // 🔹 Lógica Principal (ajuste mínimo de sincronização GPS)
     // ============================================================
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null) return;
+    public void onAccessibilityEvent(AccessibilityEvent evento) {
+        if (evento == null) return;
 
         try {
-            int eventType = event.getEventType();
-            if (eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
-                    eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+            int tipoEvento = evento.getEventType();
+            if (tipoEvento != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+                    tipoEvento != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
                 return;
 
-            String packageName = event.getPackageName() != null ? event.getPackageName().toString() : "null";
-            if (!packageName.equals(TARGET_PACKAGE_NAME)) return;
+            String nomePacote = evento.getPackageName() != null ? evento.getPackageName().toString() : "null";
+            if (!nomePacote.equals(NOME_PACOTE_ALVO)) return;
 
-            AccessibilityNodeInfo source = event.getSource();
-            if (source == null) return;
+            AccessibilityNodeInfo fonte = evento.getSource();
+            if (fonte == null) return;
 
-            List<AccessibilityNodeInfo> aceitarButtons = source.findAccessibilityNodeInfosByText("Aceitar");
-            boolean hasClickableAceitar = aceitarButtons != null && aceitarButtons.stream().anyMatch(AccessibilityNodeInfo::isClickable);
+            List<AccessibilityNodeInfo> botoesAceitar = fonte.findAccessibilityNodeInfosByText("Aceitar");
+            boolean temAceitarClicavel = botoesAceitar != null && botoesAceitar.stream().anyMatch(AccessibilityNodeInfo::isClickable);
 
-            List<AccessibilityNodeInfo> selecionarButtons = source.findAccessibilityNodeInfosByText("Selecionar");
-            boolean hasClickableSelecionar = selecionarButtons != null && selecionarButtons.stream().anyMatch(AccessibilityNodeInfo::isClickable);
+            List<AccessibilityNodeInfo> botoesSelecionar = fonte.findAccessibilityNodeInfosByText("Selecionar");
+            boolean temSelecionarClicavel = botoesSelecionar != null && botoesSelecionar.stream().anyMatch(AccessibilityNodeInfo::isClickable);
 
-            boolean isTriggerPresent = hasClickableAceitar || hasClickableSelecionar;
-            if (!isTriggerPresent) return;
+            boolean gatilhoPresente = temAceitarClicavel || temSelecionarClicavel;
+            if (!gatilhoPresente) return;
 
-            dataExtractor.extract(source);
+            extratorDados.extrair(fonte);
 
-            String currentContentHash = rideData.corridaValorStr +
-                    String.format("%.1f", rideData.totalDistanciaKM) +
-                    String.format("%.0f", rideData.totalTempoMinutos);
-            long currentTime = System.currentTimeMillis();
+            String hashConteudoAtual = dadosCorrida.corridaValorStr +
+                    String.format("%.1f", dadosCorrida.totalDistanciaKM) +
+                    String.format("%.0f", dadosCorrida.totalTempoMinutos);
+            long tempoAtual = System.currentTimeMillis();
 
-            if (!currentContentHash.equals(lastProcessedContentHash) ||
-                    (currentTime - lastProcessedTime >= DEBOUNCE_INTERVAL_MS)) {
+            if (!hashConteudoAtual.equals(ultimoHashConteudoProcessado) ||
+                    (tempoAtual - ultimoTempoProcessado >= INTERVALO_DEBOUNCE_MS)) {
 
-                DecisionResult result = decisionMaker.decide(rideData);
-                floatingOverlay.show(result, rideData);
+                ResultadoDecisao resultado = decisorCorrida.decidir(dadosCorrida);
+                overlayFlutuante.exibir(resultado, dadosCorrida);
 
                 // 🚀 Agora garantimos localização atual antes da API:
-                getCurrentLocation(() -> {
-                    if (rideData.embarqueEndereco != null && !rideData.embarqueEndereco.isEmpty() &&
-                            rideData.destinoEndereco != null && !rideData.destinoEndereco.isEmpty() &&
-                            driverCurrentLocation != null) {
+                obterLocalizacaoAtual(() -> {
+                    if (dadosCorrida.embarqueEndereco != null && !dadosCorrida.embarqueEndereco.isEmpty() &&
+                            dadosCorrida.destinoEndereco != null && !dadosCorrida.destinoEndereco.isEmpty() &&
+                            localizacaoAtualMotorista != null) {
 
-                        Log.i(TAG, "Iniciando verificação de rota com API...");
-                        Log.i(TAG, "Localização GPS usada: " + driverCurrentLocation);
+                        Log.i(TAG_DEPURACAO, "Iniciando verificação de rota com API...");
+                        Log.i(TAG_DEPURACAO, "Localização GPS usada: " + localizacaoAtualMotorista);
 
-                        routeVerifier.verifyRoute(
-                                driverCurrentLocation,
-                                rideData.embarqueEndereco,
-                                rideData.destinoEndereco,
-                                new RouteCallback() {
+                        verificadorRota.verificarRota(
+                                localizacaoAtualMotorista,
+                                dadosCorrida.embarqueEndereco,
+                                dadosCorrida.destinoEndereco,
+                                new VerificadorRota.RouteCallback() {
                                     @Override
-                                    public void onResult(float distanceKm, float durationMinutes) {
-                                        result.setApiResults(distanceKm, durationMinutes);
-                                        floatingOverlay.show(result, rideData);
+                                    public void onResult(float distanciaKm, float duracaoMinutos) {
+                                        resultado.definirResultadosApi(distanciaKm, duracaoMinutos);
+                                        overlayFlutuante.exibir(resultado, dadosCorrida);
                                     }
 
                                     @Override
-                                    public void onError(String message) {
-                                        Log.e(TAG, "Erro na verificação da API: " + message);
+                                    public void onError(String mensagem) {
+                                        Log.e(TAG_DEPURACAO, "Erro na verificação da API: " + mensagem);
                                     }
                                 });
                     } else {
-                        Log.w(TAG, "Endereços incompletos ou localização nula. API pulada.");
+                        Log.w(TAG_DEPURACAO, "Endereços incompletos ou localização nula. API pulada.");
                     }
                 });
 
-                lastProcessedContentHash = currentContentHash;
-                lastProcessedTime = currentTime;
+                ultimoHashConteudoProcessado = hashConteudoAtual;
+                ultimoTempoProcessado = tempoAtual;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Exceção no processamento de evento.", e);
+            Log.e(TAG_DEPURACAO, "Exceção no processamento de evento.", e);
         }
     }
 }

@@ -9,7 +9,7 @@ import java.util.List;
  * DTO para armazenar os dados brutos extraídos diretamente da tela de acessibilidade.
  * Esta classe NÃO deve ter lógica de cálculo ou de decisão.
  */
-public class RideOfferData {
+public class DadosOfertaCorrida {
     public String corridaValorStr = "R$ 0,00";
     public String passageiroNotaStr = "0,00";
     public float totalDistanciaKM = 0.0f;
